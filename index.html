@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿傑的日本精選美食地圖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS 變數 --- */
+        :root {
+            --bg-color: #F9F7F2;
+            --accent-color: #B7282E;
+            --accent-hover: #962025;
+            --text-color: #333333;
+            --card-bg: #FFFFFF;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-md: 0 8px 16px rgba(0,0,0,0.12);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans JP', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            letter-spacing: 0.1em;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+        }
+
+        /* --- 搜尋框樣式 --- */
+        .search-container {
+            max-width: 600px;
+            margin: 0 auto 3rem auto;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 25px;
+            font-size: 1rem;
+            border: 2px solid transparent;
+            border-radius: 50px;
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: var(--shadow-md);
+        }
+
+        .no-result {
+            text-align: center;
+            color: #888;
+            font-size: 1.1rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        /* --- Grid 佈局 --- */
+        .food-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- 卡片設計 --- */
+        .food-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .food-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-category {
+            font-size: 0.8rem;
+            color: var(--accent-color);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+        }
+
+        .card-jp-name {
+            font-size: 0.85rem;
+            color: #888;
+            font-weight: 500;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            margin: 0 0 0.5rem 0;
+            font-weight: 700;
+        }
+
+        .card-rating {
+            font-size: 0.9rem;
+            color: #f59e0b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 電話欄位樣式 */
+        .card-phone {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .card-phone a {
+            color: #555;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .card-phone a:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-btn {
+            margin-top: auto;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+            text-decoration: none;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .icon-svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        .icon-pin {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🇯🇵 阿傑的日本精選美食地圖</h1>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="搜尋美食、地點或日文店名... (例如：拉麵、Tokyo)">
+    </div>
+
+    <p id="noResultMsg" class="no-result">找不到符合的美食，請試試其他關鍵字 🍙</p>
+
+    <div class="food-grid" id="cardContainer"></div>
+
+    <script>
+        // 資料來源 (包含所有欄位：id, name, jpName, location, rating, phone, desc, img, coords)
+        const foodData = [
+            {
+                id: 1,
+                name: "數寄屋橋次郎",
+                jpName: "すきやばし次郎",
+                location: "東京 • 壽司",
+                rating: 4.9,
+                phone: "03-3535-3600",
+                desc: "壽司之神的極致職人精神，米其林三星的傳奇名店。",
+                img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?q=80&w=800&auto=format&fit=crop",
+                coords: "日本〒104-0061 Tokyo, Chuo City, Ginza, 4 Chome−2−15 塚本総業ビル B1階"
+            },
+            {
+                id: 2,
+                name: "一蘭拉麵 本店",
+                jpName: "一蘭 本社総本店",
+                location: "福岡 • 拉麵",
+                rating: 4.7,
+                phone: "092-262-0431",
+                desc: "昭和風格的味覺原點，標誌性的紅燈籠建築與獨享座位。",
+                img: "images/02.jpg",
+                coords: "5 Chome-3-2 Nakasu, Hakata Ward, Fukuoka, 810-0801日本"
+            },
+            {
+                id: 3,
+                name: "吉吉蛋包飯",
+                jpName: "ザ・洋食屋 キチキチ",
+                location: "京都 • 洋食",
+                rating: 4.6,
+                phone: "075-211-1484",
+                desc: "劃開瞬間的視覺饗宴，軟嫩雞蛋與充滿活力的主廚。",
+                img: "images/03.jpg",
+                coords: "185-4 Zaimokucho, Nakagyo Ward, Kyoto, 604-8017日本"
+            },
+            {
+                id: 4,
+                name: "道頓堀 章魚燒",
+                jpName: "たこ家道頓堀くくる",
+                location: "大阪 • 小吃",
+                rating: 4.5,
+                phone: "06-6212-7381",
+                desc: "麵糊與柴魚片的熱舞，巨大的章魚招牌是大阪的象徵。",
+                img: "images/04.jpg",
+                coords: "1 Chome-6-7 Dotonbori, Chuo Ward, Osaka, 542-0086日本"
+            },
+            {
+                id: 5,
+                name: "神戶牛排 鐵板燒",
+                jpName: "神戸牛ステーキ Ishida",
+                location: "神戶 • 鐵板燒",
+                rating: 4.9,
+                phone: "078-599-7779",
+                desc: "入口即化的頂級和牛，大理石紋路與火焰秀的結合。",
+                img: "images/05.jpg",
+                coords: "日本〒650-0012 Hyogo, Kobe, Chuo Ward, Kitanagasadori, 1 Chome−21 ２TAKAIビル 3F"
+            },
+            {
+                id: 6,
+                name: "北海道 湯咖哩",
+                jpName: "スープカレー Suage+",
+                location: "札幌 • 咖哩",
+                rating: 4.8,
+                phone: "011-233-2911",
+                desc: "冬季的暖心滋味，豐富的蔬菜色彩與香料湯頭。",
+                img: "images/06.jpg",
+                coords: "日本〒064-0804 Hokkaido, Sapporo, Chuo Ward, Minami 4 Jonishi, 5 Chome−6-1 都志松ビル ２階"
+            },
+            {
+                id: 7,
+                name: "廣島燒 村",
+                jpName: "お好み村",
+                location: "廣島 • 鐵板料理",
+                rating: 4.6,
+                phone: "082-241-2210",
+                desc: "層層堆疊的美味建築，麵條與醬汁在鐵板上滋滋作響。",
+                img: "images/07.jpg",
+                coords: "5-13 Shintenchi, Naka Ward, Hiroshima, 730-0034日本"
+            },
+            {
+                id: 8,
+                name: "金箔冰淇淋",
+                jpName: "箔一 (Hakuichi)",
+                location: "金澤 • 甜點",
+                rating: 4.4,
+                phone: "076-253-0891",
+                desc: "加賀百萬石的奢華閃耀，整片金箔覆蓋的視覺衝擊。",
+                img: "images/08.jpg",
+                coords: "1 Chome-13-10 Higashiyama, Kanazawa, Ishikawa 920-0831日本"
+            },
+            {
+                id: 9,
+                name: "敘敘苑 燒肉",
+                jpName: "叙々苑 (Jojoen)",
+                location: "東京 • 燒肉",
+                rating: 4.7,
+                phone: "03-5360-8989",
+                desc: "高空景觀與頂級燒肉，享受肉片在烤網上的絕美紋路。",
+                img: "images/09.jpg",
+                coords: "日本〒160-0022 Tokyo, Shinjuku City, Shinjuku, 3 Chome−27−10 Musashino Building, 7F"
+            },
+            {
+                id: 10,
+                name: "沖繩 塔可飯",
+                jpName: "キングタコス (King Tacos)",
+                location: "沖繩 • 異國料理",
+                rating: 4.5,
+                phone: "090-1947-1684",
+                desc: "美式風味與海島風情，生菜翠綠與莎莎醬的清爽組合。",
+                img: "images/10.jpg",
+                coords: "4244-4 Kin, Kunigami District, Okinawa 904-1201日本"
+            }
+        ];
+
+        // 獲取 DOM 元素
+        const container = document.getElementById('cardContainer');
+        const searchInput = document.getElementById('searchInput');
+        const noResultMsg = document.getElementById('noResultMsg');
+
+        // 渲染函式
+        function renderFoodCards(data) {
+            container.innerHTML = ""; 
+
+            if (data.length === 0) {
+                noResultMsg.style.display = 'block';
+                return;
+            } else {
+                noResultMsg.style.display = 'none';
+            }
+
+            let htmlContent = "";
+            data.forEach(item => {
+                const telLink = "tel:" + item.phone;
+
+                htmlContent += `
+                    <article class="food-card">
+                        <img src="${item.img}" alt="${item.name}" class="card-image">
+                        <div class="card-content">
+                            <span class="card-category">${item.location}</span>
+                            <span class="card-jp-name">${item.jpName}</span>
+                            <h2 class="card-title">${item.name}</h2>
+                            <div class="card-rating">
+                                <span>★★★★★</span> 
+                                <span style="color:#666; font-size:0.8rem;">(${item.rating})</span>
+                            </div>
+                            
+                            <div class="card-phone">
+                                <svg class="icon-svg" viewBox="0 0 24 24">
+                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                </svg>
+                                <a href="${telLink}">${item.phone}</a>
+                            </div>
+
+                            <p class="card-desc">${item.desc}</p>
+                            
+                            <a href="https://www.google.com/maps/search/?api=1&query=${item.coords}" target="_blank" class="nav-btn">
+                                <svg class="icon-pin" viewBox="0 0 24 24">
+                                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                </svg>
+                                導航前往
+                            </a>
+                        </div>
+                    </article>
+                `;
+            });
+            container.innerHTML = htmlContent;
+        }
+
+        // 搜尋監聽
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim(); 
+
+            const filteredData = foodData.filter(item => {
+                return item.name.toLowerCase().includes(searchTerm) || 
+                       item.jpName.toLowerCase().includes(searchTerm) ||
+                       item.location.toLowerCase().includes(searchTerm);
+            });
+
+            renderFoodCards(filteredData);
+        });
+
+        // 初始渲染
+        renderFoodCards(foodData);
+
+    </script>
+</body>
+</html>
